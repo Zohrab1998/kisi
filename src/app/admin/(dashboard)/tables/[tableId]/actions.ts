@@ -77,7 +77,7 @@ export async function addMenuItemToBillAction(tableId: string, billId: string, m
   });
   if (!menuItem) throw new Error("Menu item not found");
 
-  const existing = bill.items.find((i) => i.menuItemId === menuItemId && i.quantityPaid === 0);
+  const existing = bill.items.find((i) => i.menuItemId === menuItemId);
   if (existing) {
     await db.billItem.update({ where: { id: existing.id }, data: { quantity: { increment: 1 } } });
   } else {
@@ -99,7 +99,7 @@ export async function removeBillItemAction(tableId: string, billItemId: string) 
   await ownedTable(business.id, tableId);
 
   await db.billItem.deleteMany({
-    where: { id: billItemId, quantityPaid: 0, bill: { businessId: business.id } },
+    where: { id: billItemId, paidAmd: 0, bill: { businessId: business.id } },
   });
   revalidatePath(`/admin/tables/${tableId}`);
 }

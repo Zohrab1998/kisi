@@ -3,11 +3,17 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { billTotals } from "@/lib/billing";
+import { billItemRemainingAmd } from "@/lib/billing";
 import { finalizePaymentSuccess } from "@/lib/billing";
 import { feeForTotal } from "@/lib/billing";
-import { calcServiceFee } from "@/lib/money";
+import { calcServiceFee, formatAmd } from "@/lib/money";
 import { getPaymentProviderAsync } from "@/lib/payments";
 import { getBaseUrl } from "@/lib/url";
+
+const shareSchema = z.discriminatedUnion("kind", [
+  z.object({ billItemId: z.string(), kind: z.literal("quantity"), quantity: z.number().int().positive() }),
+  z.object({ billItemId: z.string(), kind: z.literal("amount"), amdAmount: z.number().int().positive() }),
+]);
 
 const payInputSchema = z.object({
   qrToken: z.string().min(1),
@@ -18,7 +24,7 @@ const payInputSchema = z.object({
     z.discriminatedUnion("mode", [
       z.object({
         mode: z.literal("items"),
-        shares: z.array(z.object({ billItemId: z.string(), quantity: z.number().int().positive() })).min(1),
+        shares: z.array(shareSchema).min(1),
       }),
       z.object({
         mode: z.literal("split"),
@@ -54,19 +60,22 @@ export async function createPaymentAction(
   if (remainingAmd <= 0) return { ok: false, error: "This bill is already fully paid" };
 
   let itemsAmountAmd = 0;
-  let itemShares: { billItemId: string; quantity: number }[] = [];
+  const itemShares: { billItemId: string; amdAmount: number }[] = [];
 
   if (input.selection.mode === "items") {
     for (const share of input.selection.shares) {
       const item = bill.items.find((i) => i.id === share.billItemId);
       if (!item) return { ok: false, error: "Item not found on this bill" };
-      const remaining = item.quantity - item.quantityPaid;
-      if (share.quantity > remaining) {
-        return { ok: false, error: `Only ${remaining} of "${item.name}" left to pay for` };
+
+      const itemRemainingAmd = billItemRemainingAmd(item);
+      const shareAmd = share.kind === "quantity" ? item.unitPriceAmd * share.quantity : share.amdAmount;
+
+      if (shareAmd <= 0 || shareAmd > itemRemainingAmd) {
+        return { ok: false, error: `Only ${formatAmd(itemRemainingAmd)} left to pay on "${item.name}"` };
       }
-      itemsAmountAmd += item.unitPriceAmd * share.quantity;
+      itemsAmountAmd += shareAmd;
+      itemShares.push({ billItemId: item.id, amdAmount: shareAmd });
     }
-    itemShares = input.selection.shares;
   } else {
     itemsAmountAmd = Math.min(Math.ceil(remainingAmd / input.selection.ways), remainingAmd);
   }
@@ -90,7 +99,7 @@ export async function createPaymentAction(
       method: input.method,
       payerName: input.payerName || null,
       itemShares: itemShares.length
-        ? { create: itemShares.map((s) => ({ billItemId: s.billItemId, quantity: s.quantity })) }
+        ? { create: itemShares.map((s) => ({ billItemId: s.billItemId, amdAmount: s.amdAmount })) }
         : undefined,
     },
   });

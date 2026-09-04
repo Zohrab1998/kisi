@@ -98,9 +98,10 @@ model Bill {
   payments Payment[]
 }
 
-// One line of the bill, e.g. "Khinkali x4". quantityPaid tracks how much
-// of quantity has already been covered by (successful) payments, which is
-// what makes item-level split payment possible.
+// One line of the bill, e.g. "Khinkali x4". paidAmd tracks how much of
+// unitPriceAmd * quantity has already been covered by (successful)
+// payments, in AMD rather than whole units — that's what lets a customer
+// pay for just part of a single shared item (see PaymentItemShare).
 model BillItem {
   id           String    @id @default(cuid())
   bill         Bill      @relation(fields: [billId], references: [id], onDelete: Cascade)
@@ -110,7 +111,7 @@ model BillItem {
   name         String
   unitPriceAmd Int
   quantity     Int
-  quantityPaid Int       @default(0)
+  paidAmd      Int       @default(0)
 
   shares PaymentItemShare[]
 }
@@ -148,14 +149,16 @@ model Payment {
   itemShares PaymentItemShare[]
 }
 
-// Join table: how much of a given BillItem's quantity a Payment covers.
+// Join table: how much (in AMD) of a given BillItem's cost a Payment
+// covers. AMD-based rather than a whole-unit count so a customer can pay
+// for just their share of one shared item, not only whole units.
 model PaymentItemShare {
   id         String   @id @default(cuid())
   payment    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
   paymentId  String
   billItem   BillItem @relation(fields: [billItemId], references: [id], onDelete: Cascade)
   billItemId String
-  quantity   Int
+  amdAmount  Int
 
   @@unique([paymentId, billItemId])
 }

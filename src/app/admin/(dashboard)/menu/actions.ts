@@ -74,3 +74,56 @@ export async function deleteMenuItemAction(menuItemId: string) {
   await db.menuItem.deleteMany({ where: { id: menuItemId, businessId: business.id } });
   revalidatePath("/admin/menu");
 }
+
+const bulkImportSchema = z
+  .array(
+    z.object({
+      name: z.string().trim().min(1).max(40),
+      items: z
+        .array(z.object({ name: z.string().trim().min(1).max(60), priceAmd: z.coerce.number().int().positive() }))
+        .min(1)
+        .max(300),
+    })
+  )
+  .min(1)
+  .max(50);
+
+export async function bulkImportMenuAction(
+  raw: unknown
+): Promise<{ ok: true; created: number; skipped: number } | { ok: false; error: string }> {
+  const business = await requireBusiness();
+  const parsed = bulkImportSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: "Invalid import data" };
+
+  const existing = await db.menuItem.findMany({
+    where: { businessId: business.id },
+    select: { name: true },
+  });
+  const existingNames = new Set(existing.map((i) => i.name.toLowerCase()));
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const cat of parsed.data) {
+    const category = await db.menuCategory.upsert({
+      where: { businessId_name: { businessId: business.id, name: cat.name } },
+      create: { businessId: business.id, name: cat.name },
+      update: {},
+    });
+
+    for (const item of cat.items) {
+      if (existingNames.has(item.name.toLowerCase())) {
+        skipped++;
+        continue;
+      }
+      await db.menuItem.create({
+        data: { businessId: business.id, categoryId: category.id, name: item.name, priceAmd: item.priceAmd },
+      });
+      existingNames.add(item.name.toLowerCase());
+      created++;
+    }
+  }
+
+  revalidatePath("/admin/menu");
+  return { ok: true, created, skipped };
+}

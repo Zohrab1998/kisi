@@ -21,7 +21,7 @@ export default function MenuPicker({
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
 
   if (groups.every((g) => g.items.length === 0)) {
-    return <p className="text-sm text-neutral-400">No available menu items yet — add some in Menu.</p>;
+    return <p className="text-sm text-neutral-500">No available menu items yet — add some in Menu.</p>;
   }
 
   const visibleGroups = activeGroupId === "all" ? groups : groups.filter((g) => g.id === activeGroupId);
@@ -41,7 +41,7 @@ export default function MenuPicker({
           type="button"
           onClick={() => setActiveGroupId("all")}
           className={`rounded-full px-3 py-1 text-xs font-medium ${
-            activeGroupId === "all" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-600"
+            activeGroupId === "all" ? "bg-orange-500 text-black" : "bg-neutral-800 text-neutral-300"
           }`}
         >
           All
@@ -52,7 +52,7 @@ export default function MenuPicker({
             type="button"
             onClick={() => setActiveGroupId(g.id)}
             className={`rounded-full px-3 py-1 text-xs font-medium ${
-              activeGroupId === g.id ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-600"
+              activeGroupId === g.id ? "bg-orange-500 text-black" : "bg-neutral-800 text-neutral-300"
             }`}
           >
             {g.name}
@@ -68,21 +68,21 @@ export default function MenuPicker({
               type="button"
               disabled={isPending}
               onClick={() => addItem(item.id)}
-              className="flex flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white text-left hover:border-neutral-400 disabled:opacity-60"
+              className="flex flex-col overflow-hidden rounded-lg border border-neutral-800 bg-black text-left hover:border-orange-500 disabled:opacity-60"
             >
               {item.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={item.imageUrl} alt={item.name} className="h-20 w-full object-cover" />
               ) : (
-                <div className="flex h-20 w-full items-center justify-center bg-neutral-100 text-xs text-neutral-400">
+                <div className="flex h-20 w-full items-center justify-center bg-neutral-900 text-xs text-neutral-500">
                   No photo
                 </div>
               )}
               <div className="flex flex-col gap-0.5 p-2">
-                <span className="truncate text-sm font-medium text-neutral-900">
+                <span className="truncate text-sm font-medium text-white">
                   {pendingItemId === item.id ? "Adding…" : item.name}
                 </span>
-                <span className="text-xs text-neutral-500">{formatAmd(item.priceAmd)}</span>
+                <span className="text-xs text-neutral-400">{formatAmd(item.priceAmd)}</span>
               </div>
             </button>
           ))

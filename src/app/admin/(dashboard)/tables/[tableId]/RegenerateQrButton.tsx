@@ -21,7 +21,7 @@ export default function RegenerateQrButton({ tableId }: { tableId: string }) {
       type="button"
       onClick={handleClick}
       disabled={isPending}
-      className="text-xs text-neutral-400 hover:text-red-600 disabled:opacity-50"
+      className="text-xs text-neutral-500 hover:text-red-400 disabled:opacity-50"
     >
       {isPending ? "Regenerating…" : "Regenerate QR (old sticker stops working)"}
     </button>

@@ -30,8 +30,8 @@ export default async function OrdersPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold text-neutral-900">Orders</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h1 className="text-xl font-semibold text-white">Orders</h1>
+        <p className="mt-1 text-sm text-neutral-400">
           {business.orderingEnabled
             ? "Orders customers placed after scanning a table QR."
             : "Ordering is currently off — enable it in Settings for customers to place orders."}
@@ -39,7 +39,7 @@ export default async function OrdersPage() {
       </div>
 
       {orders.length === 0 && (
-        <p className="rounded-lg border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-500">
+        <p className="rounded-lg border border-dashed border-neutral-700 p-6 text-center text-sm text-neutral-400">
           No orders yet.
         </p>
       )}
@@ -50,17 +50,17 @@ export default async function OrdersPage() {
           const nextLabel = NEXT_LABEL[order.status];
 
           return (
-            <div key={order.id} className="rounded-lg border border-neutral-200 bg-white p-4">
+            <div key={order.id} className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="font-medium text-neutral-900">{order.table.name}</span>
-                  <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+                  <span className="font-medium text-white">{order.table.name}</span>
+                  <span className="ml-2 rounded-full bg-neutral-800 px-2 py-0.5 text-xs text-neutral-300">
                     {STATUS_LABEL[order.status]}
                   </span>
                 </div>
-                <span className="text-sm text-neutral-500">{formatAmd(total)}</span>
+                <span className="text-sm text-neutral-400">{formatAmd(total)}</span>
               </div>
-              <ul className="mt-2 text-sm text-neutral-600">
+              <ul className="mt-2 text-sm text-neutral-300">
                 {order.items.map((item) => (
                   <li key={item.id}>
                     {item.quantity}× {item.name}
@@ -68,14 +68,14 @@ export default async function OrdersPage() {
                 ))}
               </ul>
               {order.note && (
-                <p className="mt-1 text-sm italic text-neutral-500">&ldquo;{order.note}&rdquo;</p>
+                <p className="mt-1 text-sm italic text-neutral-400">&ldquo;{order.note}&rdquo;</p>
               )}
               <div className="mt-3 flex gap-3">
                 {nextLabel && (
                   <form action={advanceOrderStatusAction.bind(null, order.id)}>
                     <button
                       type="submit"
-                      className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white"
+                      className="rounded-md bg-orange-500 px-3 py-1.5 text-xs font-semibold text-black"
                     >
                       {nextLabel}
                     </button>
@@ -83,7 +83,7 @@ export default async function OrdersPage() {
                 )}
                 {order.status !== "DELIVERED" && (
                   <form action={cancelOrderAction.bind(null, order.id)}>
-                    <button type="submit" className="text-xs text-red-600 hover:underline">
+                    <button type="submit" className="text-xs text-red-400 hover:underline">
                       Cancel
                     </button>
                   </form>

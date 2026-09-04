@@ -74,23 +74,23 @@ export default async function TableDetailPage({
 
   return (
     <div className="flex flex-col gap-8">
-      <Link href="/admin" className="text-sm text-neutral-500 hover:text-neutral-900">
+      <Link href="/admin" className="text-sm text-neutral-400 hover:text-white">
         ← Tables
       </Link>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr]">
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-neutral-200 bg-white p-4">
-          <h2 className="self-start text-sm font-medium text-neutral-900">{table.name} QR</h2>
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900 p-4">
+          <h2 className="self-start text-sm font-medium text-white">{table.name} QR</h2>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrDataUrl} alt={`QR code for ${table.name}`} className="h-48 w-48" />
+          <img src={qrDataUrl} alt={`QR code for ${table.name}`} className="h-48 w-48 rounded-md bg-white p-2" />
           <a
             href={qrDataUrl}
             download={`${table.name.replace(/\s+/g, "-").toLowerCase()}-qr.png`}
-            className="text-sm font-medium text-neutral-900 underline"
+            className="text-sm font-medium text-orange-500 underline"
           >
             Download PNG
           </a>
-          <p className="break-all text-center text-xs text-neutral-400">{payUrl}</p>
+          <p className="break-all text-center text-xs text-neutral-500">{payUrl}</p>
           <RegenerateQrButton tableId={tableId} />
         </div>
 
@@ -99,17 +99,17 @@ export default async function TableDetailPage({
             <form action={startBillAction.bind(null, tableId)}>
               <button
                 type="submit"
-                className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+                className="rounded-md bg-orange-500 px-4 py-2 text-sm font-semibold text-black"
               >
                 Start new bill
               </button>
             </form>
           ) : (
-            <div className="flex flex-col gap-4 rounded-lg border border-neutral-200 bg-white p-4">
+            <div className="flex flex-col gap-4 rounded-lg border border-neutral-800 bg-neutral-900 p-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-medium text-neutral-900">Open bill</h2>
+                <h2 className="text-sm font-medium text-white">Open bill</h2>
                 <form action={cancelBillAction.bind(null, tableId, bill.id)}>
-                  <button type="submit" className="text-xs text-red-600 hover:underline">
+                  <button type="submit" className="text-xs text-red-400 hover:underline">
                     Cancel bill
                   </button>
                 </form>
@@ -117,7 +117,7 @@ export default async function TableDetailPage({
 
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-neutral-200 text-left text-neutral-500">
+                  <tr className="border-b border-neutral-800 text-left text-neutral-400">
                     <th className="py-2 font-normal">Item</th>
                     <th className="py-2 font-normal">Unit</th>
                     <th className="py-2 font-normal">Qty</th>
@@ -128,20 +128,20 @@ export default async function TableDetailPage({
                 </thead>
                 <tbody>
                   {bill.items.map((item) => (
-                    <tr key={item.id} className="border-b border-neutral-100">
-                      <td className="py-2 text-neutral-900">{item.name}</td>
-                      <td className="py-2 text-neutral-500">{formatAmd(item.unitPriceAmd)}</td>
-                      <td className="py-2 text-neutral-500">{item.quantity}</td>
-                      <td className="py-2 text-neutral-500">{item.quantityPaid}</td>
-                      <td className="py-2 text-neutral-900">
+                    <tr key={item.id} className="border-b border-neutral-800">
+                      <td className="py-2 text-white">{item.name}</td>
+                      <td className="py-2 text-neutral-400">{formatAmd(item.unitPriceAmd)}</td>
+                      <td className="py-2 text-neutral-400">{item.quantity}</td>
+                      <td className="py-2 text-neutral-400">{formatAmd(item.paidAmd)}</td>
+                      <td className="py-2 text-white">
                         {formatAmd(item.unitPriceAmd * item.quantity)}
                       </td>
                       <td className="py-2 text-right">
-                        {item.quantityPaid === 0 && (
+                        {item.paidAmd === 0 && (
                           <form action={removeBillItemAction.bind(null, tableId, item.id)}>
                             <button
                               type="submit"
-                              className="text-xs text-neutral-400 hover:text-red-600"
+                              className="text-xs text-neutral-500 hover:text-red-400"
                             >
                               remove
                             </button>
@@ -155,21 +155,21 @@ export default async function TableDetailPage({
 
               {totals && (
                 <div className="flex justify-end gap-6 text-sm">
-                  <span className="text-neutral-500">Total {formatAmd(totals.totalAmd)}</span>
-                  <span className="text-neutral-500">Paid {formatAmd(totals.paidAmd)}</span>
-                  <span className="font-medium text-neutral-900">
+                  <span className="text-neutral-400">Total {formatAmd(totals.totalAmd)}</span>
+                  <span className="text-neutral-400">Paid {formatAmd(totals.paidAmd)}</span>
+                  <span className="font-medium text-orange-500">
                     Remaining {formatAmd(totals.remainingAmd)}
                   </span>
                 </div>
               )}
 
-              <div className="border-t border-neutral-200 pt-4">
-                <h3 className="mb-2 text-sm font-medium text-neutral-900">Tap to add</h3>
+              <div className="border-t border-neutral-800 pt-4">
+                <h3 className="mb-2 text-sm font-medium text-white">Tap to add</h3>
                 <MenuPicker tableId={tableId} billId={bill.id} groups={pickerGroups} />
               </div>
 
-              <details className="border-t border-neutral-200 pt-4">
-                <summary className="cursor-pointer text-sm font-medium text-neutral-900">
+              <details className="border-t border-neutral-800 pt-4">
+                <summary className="cursor-pointer text-sm font-medium text-white">
                   Add a custom item
                 </summary>
                 <form
@@ -181,7 +181,7 @@ export default async function TableDetailPage({
                       name="name"
                       placeholder="Name"
                       required
-                      className="col-span-3 rounded-md border border-neutral-300 px-2 py-2 text-sm sm:col-span-1"
+                      className="col-span-3 rounded-md border border-neutral-700 bg-black px-2 py-2 text-sm text-white sm:col-span-1"
                     />
                     <input
                       name="unitPriceAmd"
@@ -189,7 +189,7 @@ export default async function TableDetailPage({
                       min={1}
                       placeholder="Price"
                       required
-                      className="rounded-md border border-neutral-300 px-2 py-2 text-sm"
+                      className="rounded-md border border-neutral-700 bg-black px-2 py-2 text-sm text-white"
                     />
                     <input
                       name="quantity"
@@ -197,12 +197,12 @@ export default async function TableDetailPage({
                       min={1}
                       defaultValue={1}
                       required
-                      className="rounded-md border border-neutral-300 px-2 py-2 text-sm"
+                      className="rounded-md border border-neutral-700 bg-black px-2 py-2 text-sm text-white"
                     />
                   </div>
                   <button
                     type="submit"
-                    className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+                    className="rounded-md bg-orange-500 px-4 py-2 text-sm font-semibold text-black"
                   >
                     Add item
                   </button>
@@ -210,9 +210,9 @@ export default async function TableDetailPage({
               </details>
 
               {bill.payments.length > 0 && (
-                <div className="border-t border-neutral-200 pt-4">
-                  <h3 className="mb-2 text-sm font-medium text-neutral-900">Payments</h3>
-                  <ul className="flex flex-col gap-1 text-sm text-neutral-600">
+                <div className="border-t border-neutral-800 pt-4">
+                  <h3 className="mb-2 text-sm font-medium text-white">Payments</h3>
+                  <ul className="flex flex-col gap-1 text-sm text-neutral-300">
                     {bill.payments.map((p) => (
                       <li key={p.id} className="flex justify-between">
                         <span>

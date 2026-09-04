@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { billItemRemaining, billTotals } from "@/lib/billing";
+import { billItemRemainingAmd, billItemWholeUnitsRemaining, billTotals } from "@/lib/billing";
 import { formatAmd } from "@/lib/money";
 import PayForm from "./PayForm";
 
@@ -49,9 +49,10 @@ export default async function PayPage({
       id: i.id,
       name: i.name,
       unitPriceAmd: i.unitPriceAmd,
-      remaining: billItemRemaining(i),
+      remainingAmd: billItemRemainingAmd(i),
+      wholeUnitsRemaining: billItemWholeUnitsRemaining(i),
     }))
-    .filter((i) => i.remaining > 0);
+    .filter((i) => i.remainingAmd > 0);
 
   return (
     <div className="mx-auto w-full max-w-sm px-4 py-8">
