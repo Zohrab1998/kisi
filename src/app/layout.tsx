@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QRPay Armenia",
+  title: "Kisi",
   description: "Scan, split, and pay your bill — for restaurants, cafes, bars, and pubs.",
 };
 

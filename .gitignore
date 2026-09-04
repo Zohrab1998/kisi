@@ -53,7 +53,5 @@ next-env.d.ts
 /.claude/
 /.windsurf/
 
-# AI tool skill docs (auto-installed, not project source)
-/.agents/
-/.claude/
-/.windsurf/
+# owner-uploaded menu item photos (local disk in dev — see src/lib/uploads.ts)
+/public/uploads/

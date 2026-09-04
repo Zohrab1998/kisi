@@ -9,7 +9,7 @@ export default async function SignupPage({
   const { error } = await searchParams;
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
+    <>
       <h1 className="text-2xl font-semibold text-neutral-900">Create your account</h1>
       <p className="mt-1 text-sm text-neutral-500">Set up your restaurant, cafe, bar, or pub.</p>
 
@@ -48,7 +48,7 @@ export default async function SignupPage({
         </label>
         <button
           type="submit"
-          className="mt-2 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+          className="mt-2 rounded-md bg-orange-500 px-4 py-2 text-sm font-semibold text-black"
         >
           Create account
         </button>
@@ -60,6 +60,6 @@ export default async function SignupPage({
           Sign in
         </Link>
       </p>
-    </div>
+    </>
   );
 }

@@ -24,19 +24,19 @@ export default async function OrderPage({
     : [];
 
   return (
-    <div className="mx-auto max-w-sm px-4 py-8">
-      <Link href={`/pay/${qrToken}`} className="text-sm text-neutral-500 hover:text-neutral-900">
+    <div className="mx-auto w-full max-w-sm px-4 py-8">
+      <Link href={`/pay/${qrToken}`} className="text-sm text-neutral-400 hover:text-white">
         ← Back
       </Link>
       <div className="mb-6 mt-2 text-center">
-        <h1 className="text-xl font-semibold text-neutral-900">{table.business.name}</h1>
-        <p className="text-sm text-neutral-500">{table.name}</p>
+        <h1 className="text-xl font-semibold text-white">{table.business.name}</h1>
+        <p className="text-sm text-neutral-400">{table.name}</p>
       </div>
 
       {!table.business.orderingEnabled ? (
-        <p className="text-center text-sm text-neutral-500">Ordering isn&apos;t available right now.</p>
+        <p className="text-center text-sm text-neutral-400">Ordering isn&apos;t available right now.</p>
       ) : menuItems.length === 0 ? (
-        <p className="text-center text-sm text-neutral-500">The menu is empty right now.</p>
+        <p className="text-center text-sm text-neutral-400">The menu is empty right now.</p>
       ) : (
         <OrderForm
           qrToken={qrToken}

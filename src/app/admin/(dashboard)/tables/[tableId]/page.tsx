@@ -6,6 +6,8 @@ import { billTotals } from "@/lib/billing";
 import { formatAmd } from "@/lib/money";
 import { getBaseUrl } from "@/lib/url";
 import { tableQrPngDataUrl, tablePayUrl } from "@/lib/qr";
+import RegenerateQrButton from "./RegenerateQrButton";
+import MenuPicker from "./MenuPicker";
 import {
   addBillItemAction,
   cancelBillAction,
@@ -33,10 +35,36 @@ export default async function TableDetailPage({
   });
   if (!table) notFound();
 
-  const menuItems = await db.menuItem.findMany({
-    where: { businessId: business.id, available: true },
+  const categories = await db.menuCategory.findMany({
+    where: { businessId: business.id },
+    orderBy: { name: "asc" },
+    include: { menuItems: { where: { available: true }, orderBy: { name: "asc" } } },
+  });
+  const uncategorized = await db.menuItem.findMany({
+    where: { businessId: business.id, available: true, categoryId: null },
     orderBy: { name: "asc" },
   });
+  const pickerGroups = [
+    ...categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      items: c.menuItems.map((mi) => ({ id: mi.id, name: mi.name, priceAmd: mi.priceAmd, imageUrl: mi.imageUrl })),
+    })),
+    ...(uncategorized.length > 0
+      ? [
+          {
+            id: "uncategorized",
+            name: "Other",
+            items: uncategorized.map((mi) => ({
+              id: mi.id,
+              name: mi.name,
+              priceAmd: mi.priceAmd,
+              imageUrl: mi.imageUrl,
+            })),
+          },
+        ]
+      : []),
+  ];
 
   const baseUrl = await getBaseUrl();
   const qrDataUrl = await tableQrPngDataUrl(baseUrl, table.qrToken);
@@ -63,6 +91,7 @@ export default async function TableDetailPage({
             Download PNG
           </a>
           <p className="break-all text-center text-xs text-neutral-400">{payUrl}</p>
+          <RegenerateQrButton tableId={tableId} />
         </div>
 
         <div className="flex flex-col gap-6">
@@ -134,47 +163,51 @@ export default async function TableDetailPage({
                 </div>
               )}
 
-              <form
-                action={addBillItemAction.bind(null, tableId, bill.id)}
-                className="grid grid-cols-1 gap-2 border-t border-neutral-200 pt-4 sm:grid-cols-[1fr_auto]"
-              >
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  <select name="menuItemId" className="col-span-2 rounded-md border border-neutral-300 px-2 py-2 text-sm sm:col-span-1">
-                    <option value="">Custom item…</option>
-                    {menuItems.map((mi) => (
-                      <option key={mi.id} value={mi.id}>
-                        {mi.name} — {formatAmd(mi.priceAmd)}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    name="name"
-                    placeholder="Name (if custom)"
-                    className="rounded-md border border-neutral-300 px-2 py-2 text-sm"
-                  />
-                  <input
-                    name="unitPriceAmd"
-                    type="number"
-                    min={1}
-                    placeholder="Price (if custom)"
-                    className="rounded-md border border-neutral-300 px-2 py-2 text-sm"
-                  />
-                  <input
-                    name="quantity"
-                    type="number"
-                    min={1}
-                    defaultValue={1}
-                    required
-                    className="rounded-md border border-neutral-300 px-2 py-2 text-sm"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+              <div className="border-t border-neutral-200 pt-4">
+                <h3 className="mb-2 text-sm font-medium text-neutral-900">Tap to add</h3>
+                <MenuPicker tableId={tableId} billId={bill.id} groups={pickerGroups} />
+              </div>
+
+              <details className="border-t border-neutral-200 pt-4">
+                <summary className="cursor-pointer text-sm font-medium text-neutral-900">
+                  Add a custom item
+                </summary>
+                <form
+                  action={addBillItemAction.bind(null, tableId, bill.id)}
+                  className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]"
                 >
-                  Add item
-                </button>
-              </form>
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      name="name"
+                      placeholder="Name"
+                      required
+                      className="col-span-3 rounded-md border border-neutral-300 px-2 py-2 text-sm sm:col-span-1"
+                    />
+                    <input
+                      name="unitPriceAmd"
+                      type="number"
+                      min={1}
+                      placeholder="Price"
+                      required
+                      className="rounded-md border border-neutral-300 px-2 py-2 text-sm"
+                    />
+                    <input
+                      name="quantity"
+                      type="number"
+                      min={1}
+                      defaultValue={1}
+                      required
+                      className="rounded-md border border-neutral-300 px-2 py-2 text-sm"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+                  >
+                    Add item
+                  </button>
+                </form>
+              </details>
 
               {bill.payments.length > 0 && (
                 <div className="border-t border-neutral-200 pt-4">

@@ -25,16 +25,16 @@ export default async function PayPage({
 
   if (!bill) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-sm flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-xl font-semibold text-neutral-900">{table.business.name}</h1>
-        <p className="mt-1 text-sm text-neutral-500">{table.name}</p>
-        <p className="mt-6 text-sm text-neutral-500">
+      <div className="mx-auto flex flex-1 max-w-sm flex-col items-center justify-center px-4 text-center">
+        <h1 className="text-xl font-semibold text-white">{table.business.name}</h1>
+        <p className="mt-1 text-sm text-neutral-400">{table.name}</p>
+        <p className="mt-6 text-sm text-neutral-400">
           No open bill yet — ask your server to open one, or scan again once your order is in.
         </p>
         {table.business.orderingEnabled && (
           <Link
             href={`/pay/${qrToken}/order`}
-            className="mt-6 rounded-md bg-neutral-900 px-4 py-3 text-sm font-medium text-white"
+            className="mt-6 rounded-md bg-orange-500 px-4 py-3 text-sm font-semibold text-black"
           >
             Order now
           </Link>
@@ -54,21 +54,26 @@ export default async function PayPage({
     .filter((i) => i.remaining > 0);
 
   return (
-    <div className="mx-auto max-w-sm px-4 py-8">
+    <div className="mx-auto w-full max-w-sm px-4 py-8">
       <div className="mb-6 text-center">
-        <h1 className="text-xl font-semibold text-neutral-900">{table.business.name}</h1>
-        <p className="text-sm text-neutral-500">{table.name}</p>
-        <p className="mt-2 text-sm text-neutral-500">
+        <h1 className="text-xl font-semibold text-white">{table.business.name}</h1>
+        <p className="text-sm text-neutral-400">{table.name}</p>
+        <p className="mt-2 text-sm text-neutral-400">
           {formatAmd(remainingAmd)} remaining of {formatAmd(totalAmd)}
         </p>
       </div>
 
       {remainingAmd <= 0 ? (
-        <p className="rounded-lg border border-green-200 bg-green-50 p-4 text-center text-sm text-green-700">
+        <p className="rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-center text-sm text-green-400">
           This bill is fully paid. Thank you!
         </p>
       ) : (
-        <PayForm qrToken={qrToken} items={items} remainingAmd={remainingAmd} />
+        <PayForm
+          qrToken={qrToken}
+          items={items}
+          remainingAmd={remainingAmd}
+          serviceFeePercent={table.business.serviceFeePercent}
+        />
       )}
     </div>
   );

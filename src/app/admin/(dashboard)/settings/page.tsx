@@ -1,5 +1,5 @@
 import { requireBusiness } from "@/lib/current-business";
-import { setOrderingEnabledAction } from "./actions";
+import { setOrderingEnabledAction, setServiceFeePercentAction } from "./actions";
 
 export default async function SettingsPage() {
   const business = await requireBusiness();
@@ -28,6 +28,34 @@ export default async function SettingsPage() {
           <label htmlFor="orderingEnabled" className="text-sm text-neutral-700">
             Allow customers to order after scanning
           </label>
+          <button
+            type="submit"
+            className="ml-auto rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+          >
+            Save
+          </button>
+        </form>
+      </section>
+
+      <section className="rounded-lg border border-neutral-200 bg-white p-4">
+        <h2 className="text-sm font-medium text-neutral-900">Service fee</h2>
+        <p className="mt-1 text-sm text-neutral-500">
+          A percentage added on top of the items total on every payment — the standard
+          &quot;սպասարկման վճար&quot; charged at HoReCa venues in Armenia. Shown to customers
+          separately from the tip, and goes to you, not the platform.
+        </p>
+        <form action={setServiceFeePercentAction} className="mt-4 flex items-center gap-2">
+          <input
+            type="number"
+            id="serviceFeePercent"
+            name="serviceFeePercent"
+            min={0}
+            max={30}
+            step={0.5}
+            defaultValue={business.serviceFeePercent}
+            className="w-24 rounded-md border border-neutral-300 px-3 py-2 text-neutral-900"
+          />
+          <span className="text-sm text-neutral-500">%</span>
           <button
             type="submit"
             className="ml-auto rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"

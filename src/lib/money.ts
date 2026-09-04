@@ -12,3 +12,7 @@ export function formatAmd(amount: number): string {
 export function calcPlatformFee(totalAmd: number, feePercent: number): number {
   return Math.round(totalAmd * (feePercent / 100));
 }
+
+export function calcServiceFee(itemsAmountAmd: number, serviceFeePercent: number): number {
+  return Math.round(itemsAmountAmd * (serviceFeePercent / 100));
+}

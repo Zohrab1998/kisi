@@ -18,14 +18,30 @@ model Business {
   email           String   @unique
   passwordHash    String
   feePercent      Float    @default(2.0) // platform take rate, snapshotted onto each Payment
+  serviceFeePercent Float  @default(0) // owner-set customer-facing service charge, snapshotted onto each Payment
   orderingEnabled Boolean  @default(false) // owner-level toggle: allow "order after scan"
   idramMerchantId String? // set once the business has real Idram merchant credentials
   createdAt       DateTime @default(now())
 
-  tables    Table[]
+  tables         Table[]
+  menuCategories MenuCategory[]
+  menuItems      MenuItem[]
+  bills          Bill[]
+  orders         Order[]
+}
+
+// Groups menu items for the owner's item-entry UI and the staff "tap to add"
+// bill picker, e.g. "Salads", "Pizza".
+model MenuCategory {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  name       String
+  createdAt  DateTime @default(now())
+
   menuItems MenuItem[]
-  bills     Bill[]
-  orders    Order[]
+
+  @@unique([businessId, name])
 }
 
 // One printed QR per physical table. The QR encodes a stable token;
@@ -45,15 +61,19 @@ model Table {
 }
 
 model MenuItem {
-  id         String   @id @default(cuid())
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  id         String        @id @default(cuid())
+  business   Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   businessId String
+  category   MenuCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId String?
   name       String
   priceAmd   Int // whole AMD (dram); Armenia has no smaller circulating unit in practice
-  available  Boolean  @default(true)
-  createdAt  DateTime @default(now())
+  imageUrl   String? // optional photo shown on the staff bill-picker and customer ordering grid
+  available  Boolean       @default(true)
+  createdAt  DateTime      @default(now())
 
   orderItems OrderItem[]
+  billItems  BillItem[]
 }
 
 enum BillStatus {
@@ -82,13 +102,15 @@ model Bill {
 // of quantity has already been covered by (successful) payments, which is
 // what makes item-level split payment possible.
 model BillItem {
-  id           String  @id @default(cuid())
-  bill         Bill    @relation(fields: [billId], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  bill         Bill      @relation(fields: [billId], references: [id], onDelete: Cascade)
   billId       String
+  menuItem     MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+  menuItemId   String? // set when added from the menu picker, so repeat taps increment quantity
   name         String
   unitPriceAmd Int
   quantity     Int
-  quantityPaid Int     @default(0)
+  quantityPaid Int       @default(0)
 
   shares PaymentItemShare[]
 }
@@ -111,8 +133,9 @@ model Payment {
   bill               Bill          @relation(fields: [billId], references: [id], onDelete: Cascade)
   billId             String
   itemsAmountAmd     Int // portion covering bill items
+  serviceFeeAmd      Int           @default(0) // serviceFeePercent snapshot, on top of itemsAmountAmd
   tipAmountAmd       Int           @default(0)
-  totalAmd           Int // itemsAmountAmd + tipAmountAmd = what the customer is charged
+  totalAmd           Int // itemsAmountAmd + serviceFeeAmd + tipAmountAmd = what the customer is charged
   platformFeeAmd     Int // totalAmd * feePercent snapshot, for payout reconciliation
   method             PaymentMethod
   status             PaymentStatus @default(PENDING)

@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -39,6 +40,7 @@ const addItemSchema = z.object({
   quantity: z.coerce.number().int().positive().max(100),
 });
 
+// Custom, one-off line (not from the menu) — the "Name/Price/Qty" fallback form.
 export async function addBillItemAction(tableId: string, billId: string, formData: FormData) {
   const business = await requireBusiness();
   await ownedTable(business.id, tableId);
@@ -48,32 +50,47 @@ export async function addBillItemAction(tableId: string, billId: string, formDat
   });
   if (!bill) throw new Error("Bill not open");
 
-  const menuItemId = formData.get("menuItemId");
-  if (menuItemId && typeof menuItemId === "string" && menuItemId !== "") {
-    const menuItem = await db.menuItem.findFirst({
-      where: { id: menuItemId, businessId: business.id },
-    });
-    if (!menuItem) throw new Error("Menu item not found");
-    const quantity = z.coerce.number().int().positive().max(100).parse(formData.get("quantity"));
+  const { name, unitPriceAmd, quantity } = addItemSchema.parse({
+    name: formData.get("name"),
+    unitPriceAmd: formData.get("unitPriceAmd"),
+    quantity: formData.get("quantity"),
+  });
 
+  await db.billItem.create({ data: { billId: bill.id, name, unitPriceAmd, quantity } });
+  revalidatePath(`/admin/tables/${tableId}`);
+}
+
+// One tap on a menu-picker card: add 1 of that item, or bump the quantity if
+// it's already on the bill and hasn't been paid for yet.
+export async function addMenuItemToBillAction(tableId: string, billId: string, menuItemId: string) {
+  const business = await requireBusiness();
+  await ownedTable(business.id, tableId);
+
+  const bill = await db.bill.findFirst({
+    where: { id: billId, businessId: business.id, status: "OPEN" },
+    include: { items: true },
+  });
+  if (!bill) throw new Error("Bill not open");
+
+  const menuItem = await db.menuItem.findFirst({
+    where: { id: menuItemId, businessId: business.id, available: true },
+  });
+  if (!menuItem) throw new Error("Menu item not found");
+
+  const existing = bill.items.find((i) => i.menuItemId === menuItemId && i.quantityPaid === 0);
+  if (existing) {
+    await db.billItem.update({ where: { id: existing.id }, data: { quantity: { increment: 1 } } });
+  } else {
     await db.billItem.create({
       data: {
         billId: bill.id,
+        menuItemId: menuItem.id,
         name: menuItem.name,
         unitPriceAmd: menuItem.priceAmd,
-        quantity,
+        quantity: 1,
       },
     });
-  } else {
-    const { name, unitPriceAmd, quantity } = addItemSchema.parse({
-      name: formData.get("name"),
-      unitPriceAmd: formData.get("unitPriceAmd"),
-      quantity: formData.get("quantity"),
-    });
-
-    await db.billItem.create({ data: { billId: bill.id, name, unitPriceAmd, quantity } });
   }
-
   revalidatePath(`/admin/tables/${tableId}`);
 }
 
@@ -84,5 +101,15 @@ export async function removeBillItemAction(tableId: string, billItemId: string) 
   await db.billItem.deleteMany({
     where: { id: billItemId, quantityPaid: 0, bill: { businessId: business.id } },
   });
+  revalidatePath(`/admin/tables/${tableId}`);
+}
+
+// Invalidates the table's printed QR and issues a new one. Only needed if a
+// sticker is lost or damaged — the old QR stops resolving to this table.
+export async function regenerateQrTokenAction(tableId: string) {
+  const business = await requireBusiness();
+  await ownedTable(business.id, tableId);
+
+  await db.table.update({ where: { id: tableId }, data: { qrToken: randomUUID() } });
   revalidatePath(`/admin/tables/${tableId}`);
 }

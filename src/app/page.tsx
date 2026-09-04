@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function Home() {
   return (
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center px-4 text-center">
-      <h1 className="text-3xl font-semibold text-neutral-900">QRPay Armenia</h1>
+      <h1 className="text-3xl font-semibold text-neutral-900">Kisi</h1>
       <p className="mt-3 max-w-md text-neutral-500">
         Scan the QR at your table, split or select what you&apos;re paying for, add a tip, and pay
         with Idram or a Visa/Mastercard — no app install needed.

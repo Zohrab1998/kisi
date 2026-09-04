@@ -9,7 +9,7 @@ export default async function LoginPage({
   const { error } = await searchParams;
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
+    <>
       <h1 className="text-2xl font-semibold text-neutral-900">Sign in</h1>
       <p className="mt-1 text-sm text-neutral-500">Manage your tables, bills, and payments.</p>
 
@@ -38,7 +38,7 @@ export default async function LoginPage({
         </label>
         <button
           type="submit"
-          className="mt-2 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+          className="mt-2 rounded-md bg-orange-500 px-4 py-2 text-sm font-semibold text-black"
         >
           Sign in
         </button>
@@ -50,6 +50,6 @@ export default async function LoginPage({
           Create one
         </Link>
       </p>
-    </div>
+    </>
   );
 }

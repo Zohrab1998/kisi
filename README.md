@@ -1,4 +1,4 @@
-# QRPay Armenia — MVP scaffold
+# Kisi — MVP scaffold
 
 QR-code bill payment for restaurants/cafes/bars/pubs. Customers scan a table QR,
 select items (or split evenly), add a tip, and pay with Idram or a Visa/Mastercard

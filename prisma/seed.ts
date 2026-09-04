@@ -20,25 +20,37 @@ async function main() {
       email,
       passwordHash: await hashPassword("password123"),
       feePercent: 2.0,
+      serviceFeePercent: 10,
       orderingEnabled: true,
-      menuItems: {
-        create: [
-          { name: "Khinkali (4 pcs)", priceAmd: 2800 },
-          { name: "Lavash", priceAmd: 500 },
-          { name: "Dolma", priceAmd: 3200 },
-          { name: "Armenian coffee", priceAmd: 1000 },
-          { name: "Ararat brandy (50ml)", priceAmd: 2500 },
-        ],
+      menuCategories: {
+        create: [{ name: "Starters" }, { name: "Mains" }, { name: "Drinks" }],
       },
       tables: {
         create: [{ name: "Table 1" }, { name: "Table 2" }, { name: "Patio 3" }],
       },
     },
-    include: { tables: true, menuItems: true },
+    include: { tables: true, menuCategories: true },
   });
 
+  const starters = business.menuCategories.find((c) => c.name === "Starters")!;
+  const mains = business.menuCategories.find((c) => c.name === "Mains")!;
+  const drinks = business.menuCategories.find((c) => c.name === "Drinks")!;
+
+  const menuItems = await Promise.all(
+    [
+      { name: "Lavash", priceAmd: 500, categoryId: starters.id },
+      { name: "Dolma", priceAmd: 3200, categoryId: starters.id },
+      { name: "Khinkali (4 pcs)", priceAmd: 2800, categoryId: mains.id },
+      { name: "Grilled Trout", priceAmd: 4500, categoryId: mains.id },
+      { name: "Armenian coffee", priceAmd: 1000, categoryId: drinks.id },
+      { name: "Ararat brandy (50ml)", priceAmd: 2500, categoryId: drinks.id },
+    ].map((data) => db.menuItem.create({ data: { ...data, businessId: business.id } }))
+  );
+
   const table1 = business.tables.find((t) => t.name === "Table 1")!;
-  const [khinkali, lavash, dolma] = business.menuItems;
+  const lavash = menuItems.find((m) => m.name === "Lavash")!;
+  const dolma = menuItems.find((m) => m.name === "Dolma")!;
+  const khinkali = menuItems.find((m) => m.name === "Khinkali (4 pcs)")!;
 
   await db.bill.create({
     data: {
@@ -46,9 +58,9 @@ async function main() {
       tableId: table1.id,
       items: {
         create: [
-          { name: khinkali.name, unitPriceAmd: khinkali.priceAmd, quantity: 2 },
-          { name: lavash.name, unitPriceAmd: lavash.priceAmd, quantity: 3 },
-          { name: dolma.name, unitPriceAmd: dolma.priceAmd, quantity: 1 },
+          { menuItemId: khinkali.id, name: khinkali.name, unitPriceAmd: khinkali.priceAmd, quantity: 2 },
+          { menuItemId: lavash.id, name: lavash.name, unitPriceAmd: lavash.priceAmd, quantity: 3 },
+          { menuItemId: dolma.id, name: dolma.name, unitPriceAmd: dolma.priceAmd, quantity: 1 },
         ],
       },
     },

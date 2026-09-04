@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { billTotals } from "@/lib/billing";
 import { finalizePaymentSuccess } from "@/lib/billing";
 import { feeForTotal } from "@/lib/billing";
+import { calcServiceFee } from "@/lib/money";
 import { getPaymentProviderAsync } from "@/lib/payments";
 import { getBaseUrl } from "@/lib/url";
 
@@ -74,13 +75,15 @@ export async function createPaymentAction(
     return { ok: false, error: "Invalid amount" };
   }
 
-  const totalAmd = itemsAmountAmd + input.tipAmd;
+  const serviceFeeAmd = calcServiceFee(itemsAmountAmd, table.business.serviceFeePercent);
+  const totalAmd = itemsAmountAmd + serviceFeeAmd + input.tipAmd;
   const platformFeeAmd = feeForTotal(totalAmd, table.business.feePercent);
 
   const payment = await db.payment.create({
     data: {
       billId: bill.id,
       itemsAmountAmd,
+      serviceFeeAmd,
       tipAmountAmd: input.tipAmd,
       totalAmd,
       platformFeeAmd,
