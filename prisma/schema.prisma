@@ -1,0 +1,172 @@
+// Prisma schema for the QR bill-pay platform (MVP).
+// Dev uses SQLite for zero-setup local runs; swap the datasource to
+// postgresql for production (see README).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// A HoReCa venue (restaurant/cafe/bar/pub) — the merchant.
+model Business {
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  passwordHash    String
+  feePercent      Float    @default(2.0) // platform take rate, snapshotted onto each Payment
+  orderingEnabled Boolean  @default(false) // owner-level toggle: allow "order after scan"
+  idramMerchantId String? // set once the business has real Idram merchant credentials
+  createdAt       DateTime @default(now())
+
+  tables    Table[]
+  menuItems MenuItem[]
+  bills     Bill[]
+  orders    Order[]
+}
+
+// One printed QR per physical table. The QR encodes a stable token;
+// which bill it resolves to changes as bills open/close.
+model Table {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  name       String
+  qrToken    String   @unique @default(cuid())
+  createdAt  DateTime @default(now())
+
+  bills  Bill[]
+  orders Order[]
+
+  @@unique([businessId, name])
+}
+
+model MenuItem {
+  id         String   @id @default(cuid())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  name       String
+  priceAmd   Int // whole AMD (dram); Armenia has no smaller circulating unit in practice
+  available  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  orderItems OrderItem[]
+}
+
+enum BillStatus {
+  OPEN
+  PAID
+  CANCELLED
+}
+
+// A bill is opened by staff for a table and holds the line items that
+// customers can pay against (in full, split, or item-by-item).
+model Bill {
+  id         String     @id @default(cuid())
+  business   Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  table      Table      @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  tableId    String
+  status     BillStatus @default(OPEN)
+  createdAt  DateTime   @default(now())
+  closedAt   DateTime?
+
+  items    BillItem[]
+  payments Payment[]
+}
+
+// One line of the bill, e.g. "Khinkali x4". quantityPaid tracks how much
+// of quantity has already been covered by (successful) payments, which is
+// what makes item-level split payment possible.
+model BillItem {
+  id           String  @id @default(cuid())
+  bill         Bill    @relation(fields: [billId], references: [id], onDelete: Cascade)
+  billId       String
+  name         String
+  unitPriceAmd Int
+  quantity     Int
+  quantityPaid Int     @default(0)
+
+  shares PaymentItemShare[]
+}
+
+enum PaymentMethod {
+  IDRAM_WALLET
+  CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+// One customer's payment against a bill. Can cover specific items
+// (via PaymentItemShare) and/or an evenly-split amount, plus a tip.
+model Payment {
+  id                 String        @id @default(cuid())
+  bill               Bill          @relation(fields: [billId], references: [id], onDelete: Cascade)
+  billId             String
+  itemsAmountAmd     Int // portion covering bill items
+  tipAmountAmd       Int           @default(0)
+  totalAmd           Int // itemsAmountAmd + tipAmountAmd = what the customer is charged
+  platformFeeAmd     Int // totalAmd * feePercent snapshot, for payout reconciliation
+  method             PaymentMethod
+  status             PaymentStatus @default(PENDING)
+  payerName          String?
+  idramTransactionId String?
+  failureReason      String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  itemShares PaymentItemShare[]
+}
+
+// Join table: how much of a given BillItem's quantity a Payment covers.
+model PaymentItemShare {
+  id         String   @id @default(cuid())
+  payment    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  paymentId  String
+  billItem   BillItem @relation(fields: [billItemId], references: [id], onDelete: Cascade)
+  billItemId String
+  quantity   Int
+
+  @@unique([paymentId, billItemId])
+}
+
+enum OrderStatus {
+  PLACED
+  ACKNOWLEDGED
+  PREPARING
+  DELIVERED
+  CANCELLED
+}
+
+// Optional "order after scan" flow — only reachable when the business has
+// orderingEnabled = true.
+model Order {
+  id         String      @id @default(cuid())
+  business   Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId String
+  table      Table       @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  tableId    String
+  status     OrderStatus @default(PLACED)
+  note       String?
+  createdAt  DateTime    @default(now())
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id         String    @id @default(cuid())
+  order      Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId    String
+  menuItem   MenuItem? @relation(fields: [menuItemId], references: [id])
+  menuItemId String?
+  name       String
+  unitPriceAmd Int
+  quantity   Int
+}
